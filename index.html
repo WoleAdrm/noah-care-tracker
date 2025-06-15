@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Baby Care Assistant</title>
-    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiQmFieSBDYXJlIEFzc2lzdGFudCIsInNob3J0X25hbWUiOiJCYWJ5Q2FyZSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJ0aGVtZV9jb2xvciI6IiM2NjdlZWEiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzY2N2VlYSIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUIzYVdSMGFEMGlOalFpSUdobGFXZG9kRDBpTmpRaUlIWnBaWGRDYjNnOUlqQWdNQ0EyTkNBMk5DSWdabWxzYkQwaWJtOXVaU0krUEhSbGVIUWdlRDBpTXpJaUlIazlJakUySWlCbWFXeHNQU0lqWmpaaklIUmxlSFF0WVc1amFHOXlQU0p0YVdSa2JHVWlQaUEzUEM5MFpYaDBQand2YzNablBnPT0iLCJzaXplcyI6IjY0eDY0IiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
     <style>
         * {
             margin: 0;
@@ -233,26 +232,6 @@
             margin: 0 10px;
         }
         
-        .install-prompt {
-            background: #28a745;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-            display: none;
-        }
-        
-        .install-prompt button {
-            background: white;
-            color: #28a745;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            margin: 0 5px;
-            cursor: pointer;
-        }
-        
         @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -274,12 +253,6 @@
     </style>
 </head>
 <body>
-    <div id="installPrompt" class="install-prompt">
-        <p>📱 Install this app on your phone for easy access!</p>
-        <button onclick="installApp()">Install App</button>
-        <button onclick="hideInstallPrompt()">Later</button>
-    </div>
-
     <div class="container">
         <div class="header">
             <h1>👶 Baby Care Assistant</h1>
@@ -331,33 +304,7 @@
     </div>
 
     <script>
-        // PWA installation support
-        let deferredPrompt;
-        
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('installPrompt').style.display = 'block';
-        });
-        
-        function installApp() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the install prompt');
-                    }
-                    deferredPrompt = null;
-                    hideInstallPrompt();
-                });
-            }
-        }
-        
-        function hideInstallPrompt() {
-            document.getElementById('installPrompt').style.display = 'none';
-        }
-
-        // Medication data with phosphate medication
+        // Medication data with new phosphate medication
         const medications = [
             {
                 name: "Omeprazole",
@@ -416,7 +363,7 @@
         // Store completed tasks with localStorage
         function getCompletedMeds() {
             try {
-                return JSON.parse(localStorage.getItem('babycare_completedMeds') || '{}');
+                return JSON.parse(localStorage.getItem('completedMeds') || '{}');
             } catch (e) {
                 console.warn('LocalStorage not available, using session storage');
                 return {};
@@ -425,7 +372,7 @@
         
         function getCompletedFeeds() {
             try {
-                return JSON.parse(localStorage.getItem('babycare_completedFeeds') || '{}');
+                return JSON.parse(localStorage.getItem('completedFeeds') || '{}');
             } catch (e) {
                 console.warn('LocalStorage not available, using session storage');
                 return {};
@@ -434,7 +381,7 @@
         
         function saveCompletedMeds(data) {
             try {
-                localStorage.setItem('babycare_completedMeds', JSON.stringify(data));
+                localStorage.setItem('completedMeds', JSON.stringify(data));
             } catch (e) {
                 console.warn('Could not save to localStorage');
             }
@@ -442,7 +389,7 @@
         
         function saveCompletedFeeds(data) {
             try {
-                localStorage.setItem('babycare_completedFeeds', JSON.stringify(data));
+                localStorage.setItem('completedFeeds', JSON.stringify(data));
             } catch (e) {
                 console.warn('Could not save to localStorage');
             }
@@ -767,7 +714,7 @@
             
             sortedDates.forEach(date => {
                 historyText += `${date}\n`;
-                historyText += "=".repeat(date.length) + "\n";
+                historyText += "=" .repeat(date.length) + "\n";
                 
                 if (completedMeds[date]) {
                     historyText += "Medications:\n";
@@ -782,4 +729,29 @@
                     historyText += "Feedings:\n";
                     Object.entries(completedFeeds[date]).forEach(([key, completed]) => {
                         if (completed) {
-                            historyText += `
+                            historyText += `  ✓ ${key}\n`;
+                        }
+                    });
+                }
+                
+                historyText += "\n";
+            });
+            
+            alert(historyText);
+        }
+        
+        function updateDisplay() {
+            updateCurrentTime();
+            generateNextActions();
+            generateMedicationList();
+            generateFeedingSchedule();
+            updateStats();
+        }
+        
+        // Initialize and set up periodic updates
+        updateDisplay();
+        setInterval(updateDisplay, 60000); // Update every minute
+        setInterval(updateCurrentTime, 1000); // Update time every second
+    </script>
+</body>
+</html>
